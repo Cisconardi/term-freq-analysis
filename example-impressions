@@ -5,7 +5,7 @@ import csv
 new = []
 num = []
 # reading CSV file
-data = read_csv("query_no_brand.csv")
+data = read_csv("source.csv")
 
 # converting column data to list
 lst = data['Query'].tolist()
