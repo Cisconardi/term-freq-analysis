@@ -8,8 +8,8 @@ num = []
 data = read_csv("query_no_brand.csv")
 
 # converting column data to list
-lst = data['query'].tolist()
-num = data['impressioni'].tolist()
+lst = data['Query'].tolist()
+num = data['Impressioni'].tolist()
 i = 0
 num = [int(num) for num in num]
 
