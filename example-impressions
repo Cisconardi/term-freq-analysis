@@ -2,33 +2,50 @@ from collections import Counter
 from pandas import *
 import pandas as pd
 import csv
-new = []
-num = []
-# reading CSV file
-data = read_csv("source.csv")
 
-# converting column data to list
-lst = data['Query'].tolist()
+#Leggo l'estrazione di Google Search Consule o del mio custom csv
+data = read_csv("d.csv")
+
+#Converto le colonne in due liste
+query = data['Query più frequenti'].tolist()
 num = data['Impressioni'].tolist()
+#Questo preleva le impression num = data['Clic'].tolist()
+
+#Setto una variabile contatore i a 0
 i = 0
+#Converto i dati della colonna clic in numeri interi (da exp GSC sono float)
 num = [int(num) for num in num]
 
-for string in lst:
-  #print(num[i])
-  #terms = string.split()
-  #print(s lo tring.split())
-  for k in range(num[i]):
-    terms = string.split()
-    #print(terms)
-    new.extend(terms)
-    #print(new)
-    val = Counter(new)
-  #print(val)
-  if i <= len(num):
-    i += 1
-  #print(a)
+#Creo un ciclo per ogni query nella lista
+for queries in query:
+    #Splitto la query in termini usando lo spazio tra i termini
+    terms = queries.split()
+    #Pulisco eventuali doppioni nella query
+    res = [*set(terms)]
+    #Creo un clico per ogni termine nella query
+    for result in res:
+        #Creo una condizione che si applica al primo ciclo
+        if i == 0:
+            #Se è il primo ciclo crea un dizionario da zero
+            diz = {result:num[i]}
+        #Altrimenti...
+        else:
+            #Se il termine non è presente lo creo e peso clic o impressions
+            if not result in diz:
+                diz.update({result:num[i]})
+            #Altrimenti aggiorno il peso con i nuovi dati della riga
+            else:
+                diz[result] += num[i]
+    #Controllo per riniziare il ciclo
+    if i <= len(num):
+        i += 1
 
-with open('newfile.csv', encoding='utf-8-sig', mode='w') as fp:
-    fp.write('query,freq\n')  
-    for tag, count in Counter.items(val):  
-        fp.write('{},{}\n'.format(tag, count)) 
+#Creo un file csv
+with open('term_clicks_occurence.csv', 'w', newline='') as csvfile:
+    #Assegno le intestazioni del csv al file
+    fieldnames = ['unique term', 'occurrence']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    #Creo una riga con il termine unico e le occorrenze
+    for key in diz:
+        writer.writerow({'unique term': key, 'occurrence': diz[key]})
