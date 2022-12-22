@@ -4,7 +4,7 @@ import pandas as pd
 import csv
 
 #Leggo l'estrazione di Google Search Consule o del mio custom csv
-data = read_csv("d.csv")
+data = read_csv("my_GSC_export.csv")
 
 #Converto le colonne in due liste
 query = data['Query più frequenti'].tolist()
