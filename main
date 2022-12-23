@@ -1,0 +1,89 @@
+from collections import Counter
+from pandas import *
+import pandas as pd
+import csv
+import matplotlib.pyplot as plt
+import decimal
+from decimal import *
+import re
+#Leggo l'estrazione di Google Search Console o del mio custom csv
+data = read_csv('gsc_export.csv')
+
+#Converto le colonne in liste: queries, impressions e clicks
+queries = data['Query più frequenti'].tolist()
+imprs = data['Clic'].tolist()
+clicks = data['Impressioni'].tolist()
+
+#Somme assolute clic/impressions
+clicks_ass = sum(clicks)
+imprs_ass = sum(imprs)
+
+#Setto una variabile contatore i a 0
+i = 0
+#Prendo le somme dei clic/impressions
+sum_imprs = sum(imprs)
+sum_clicks = sum(clicks)
+
+#Regex per stopwords e termini che non vogliamo includere
+#Lista presa qui: https://countwordsfree.com/stopwords/italian
+stopwords_it = r'^(a|adesso|ai|al|alla|allo|che|chi|con|cui|da|del|della|dello|deve|devo|di|ecco|fra|giu|ha|hai|hanno|ho|il|indietro|io|la|le|lei|lo|loro|lui|ma|me|meglio|molta|molti|molto|nei|nella|no|noi|nome|nostro|oltre|ora|peggio|pero|persone|piu|poco|primo|promesso|qua|quarto|quasi|quattro|quello|questo|qui|quindi|quinto|rispetto|sara|secondo|sei|sembra|senza|sette|sia|siamo|siete|solo|sono|sopra|soprattutto|sotto|stati|stato|stesso|su|sul|sulla|tanto|te|tra|tre|un|una|uno|va|vai|voi|volte|vostro|invece|sembrava)$'
+
+#Converto i dati delle colonne clic/impressioni in numeri interi (da exp GSC sono float)
+imprs = [int(imprs) for imprs in imprs]
+clicks = [int(clicks) for clicks in clicks]
+
+#Creo un ciclo per ogni query nella lista
+for query in queries:
+    #Splitto la query in termini usando lo spazio tra i termini
+    terms = query.split()
+    #Pulisco eventuali doppioni nella query
+    results = [*set(terms)]
+    #Creo un ciclo per ogni termine nella query
+    for result in results:
+        #Controllo la presenza di stopwords e termini con lung. < 2 e filtro
+        if not re.match(stopwords_it, result) and len(result) > 2:
+            #Creo una lista con i valori clic/impression
+            kpis = [imprs[i],clicks[i]]
+            #Creo una condizione che si applica al primo ciclo
+            if i == 0:
+                #Se è il primo ciclo crea un dizionario da zero
+                diz = {result:[kpis[0],kpis[1]]}
+            #Altrimenti...
+            else:
+                #Se il termine non è presente lo creo e peso clic e impressions
+                if not result in diz:
+                    diz.update({result:[kpis[0],kpis[1]]})
+                #Altrimenti aggiorno il peso con i nuovi dati della riga
+                else:
+                    diz[result][0] += kpis[0]
+                    diz[result][1] += kpis[1]
+        #Stampo i termini filtrati per check
+        else:
+            print(f'Termine filtrato: {result}')
+    #Controllo per riniziare il ciclo
+    if i <= len(imprs):
+        i += 1
+        
+#Aggiungo il totale assoluto di impressions e clicks      
+diz.update({"totale":[imprs_ass,clicks_ass]})
+        
+#Creo un file csv
+with open('term_analysis.csv', 'w', newline='') as csvfile:
+    #Assegno le intestazioni del csv al file
+    fieldnames = ['unique term', 'impressions_occurrence','fq%_impressions','clicks_occurence','fq%_clicks']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    #Faccio un ciclo per tutte le chiavi del dizionario
+    for key in diz:
+        #Calcolo la frequenza percentuale di impressions e clicks
+        fq_imprs = float(round(diz[key][0]/sum_imprs*100,2))
+        fq_clicks = float(round(diz[key][1]/sum_clicks*100,2))
+        #Aggiungo al dizionario i valori delle frequenze
+        diz[key].append(f'{fq_imprs}%')
+        diz[key].append(f'{fq_clicks}%')
+        #Creo una riga con il termine unico e le occorrenze
+        writer.writerow({'unique term': key, 'impressions_occurrence': diz[key][1],'fq%_impressions':diz[key][3],'clicks_occurence':diz[key][0],'fq%_clicks':diz[key][2]})             
+        
+#Stampo il dizionario per controllo
+print(diz)
+
